@@ -24,7 +24,7 @@ public class WinchManip implements Component
 	public void update() 
 	{
 		//Set the liftWinchSet variable according to how far the joystick is pushed
-		winchSetSpeed = Robot.driveController.getRawAxis(XboxMap.RIGHT_JOY_VERT) * MAX_MULTIPLIER;
+		winchSetSpeed = Robot.manipController.getRawAxis(XboxMap.D_PAD_VERT) * MAX_MULTIPLIER;
 		/* TODO: Make sure have direction correct */
 		liftWinchSet.set(-winchSetSpeed);
 		

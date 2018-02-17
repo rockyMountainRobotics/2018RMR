@@ -142,7 +142,7 @@ public class Robot extends IterativeRobot
 		System.out.println("Enter autoInit");
 		
 		//Set the state of autonomous to 'a' to start
-		autoState = 'a';
+		autoState = '0';
 		
 		//Output for debugging
 		System.out.println("Calibrate gyro");
@@ -171,9 +171,11 @@ public class Robot extends IterativeRobot
 	//Runs periodically during autonomous
 	public void autonomousPeriodic() 
 	{
+		System.out.println("autoState" + autoState); 
 		/* (mostly fixed i think but double check) TODO remember we want to move forward even if lidar doesnt work */
 		
 			/*
+			 State 0: Robot picks up the cube from inside the robot
 			 State a: Robot is on the back wall and rotating
 			 State b: Robot is moving forwards
 			 State c: Robot is turning to face switch

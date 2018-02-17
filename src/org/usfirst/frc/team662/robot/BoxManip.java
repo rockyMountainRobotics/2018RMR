@@ -9,6 +9,7 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.Solenoid;
+import edu.wpi.first.wpilibj.Timer;
 
 public class BoxManip implements Component 
 {
@@ -43,8 +44,15 @@ public class BoxManip implements Component
 	//public DigitalInput limitSwitchTop = new DigitalInput(RobotMap.LIMIT_TOP);
 	//public DigitalInput limitSwitchMiddle = new DigitalInput(RobotMap.LIMIT_MIDDLE);
 	//public DigitalInput limitSwitchBottom = new DigitalInput(RobotMap.LIMIT_BOTTOM);
+	public DigitalInput limitSwitchArm = new DigitalInput(RobotMap.LIMIT_ARM);
 	
+	//it's a timer
+	Timer timer = new Timer();
 	
+	//autonomous timings 
+	static double autoChainTimeA = 1; 
+	static double autoarmpickupTimeA = autoChainTimeA + 1.5;
+	static double autoarmfinishTimeB = autoarmpickupTimeA + 2;
 	
 	//Create an isTraveling boolean (true/false) variable
 	boolean isTraveling = false;
@@ -61,6 +69,7 @@ public class BoxManip implements Component
 		boolean topLimit = false; // !limitSwitchTop.get();
 		boolean middleLimit = false; //!limitSwitchMiddle.get();
 		boolean bottomLimit = false; //!limitSwitchBottom.get();
+		boolean armLimit = false; 
 		
 		double armSpeed = Robot.manipController.getRawAxis(XboxMap.RIGHT_JOY_VERT);
 		double chainSpeed = Robot.manipController.getRawAxis(XboxMap.LEFT_JOY_VERT);
@@ -158,29 +167,18 @@ public class BoxManip implements Component
 			//liftChain.
 		}
 		
-		//current = Robot.manipController.getRawButton(XboxMap.B);
+		current = Robot.manipController.getRawButton(XboxMap.LB);
 		
 		System.out.println(current);
 		System.out.println(manipulatorSolenoid.get());
 	
-		/*if(current == true && past == false){
+		if(current == true && past == false){
 			if(manipulatorSolenoid.get() == DoubleSolenoid.Value.kForward) 
 				manipulatorSolenoid.set(DoubleSolenoid.Value.kReverse);
 			else
 				manipulatorSolenoid.set(DoubleSolenoid.Value.kForward);
-		}*/
-		
-		
-		if(Robot.manipController.getRawButton(XboxMap.B))
-		{
-			manipulatorSolenoid.set(DoubleSolenoid.Value.kForward);
-			
-		}
-		
-		else if(Robot.manipController.getRawButton(XboxMap.X))
-		{
-			manipulatorSolenoid.set(DoubleSolenoid.Value.kReverse);
-		}
+		}	
+	
 		//SmartDashboard.putBoolean("High Gear", !solenoid.get());
 		past = current;
 	}
@@ -191,21 +189,38 @@ public class BoxManip implements Component
 		switch (Robot.autoState)
 		{
 		//For first three cases, code is in Drive.
+		
+		/*
 		case 'a':
 			break;
 		case 'b':
 			break;
 		case 'c':
 			break;
+		*/
+		case '0':
+			manipulatorSolenoid.set(DoubleSolenoid.Value.kReverse);
+			liftChain.set(CHAIN_SPEED);
+			if (timer.get() >= autoChainTimeA) 
+			{
+				liftChain.set(REST_CHAIN_SPEED);
+				rotateArms.set(ARM_SPEED);
+				if (timer.get() >= autoarmpickupTimeA)
+				{	
+					manipulatorSolenoid.set(DoubleSolenoid.Value.kForward);
+					if (limitSwitchArm.get())
+					{	
+						rotateArms.set(REST_ARM_SPEED);
+					}
+				}
+			}
+			Robot.autoState = 'a';
+			break;
 			
 		//Case D is the manipulator part, so it goes under BoxManip
 		case 'd':
-			//Manipulator Motor moves 
-			//TODO not correct 
-			
-			//manipMotor.set(.5);
 			manipulatorSolenoid.set(DoubleSolenoid.Value.kReverse);
-			break;
+		break;
 		}
 	
 		//	{ make the arms put the box into the switch. The robot should be lined up with the wall.}
