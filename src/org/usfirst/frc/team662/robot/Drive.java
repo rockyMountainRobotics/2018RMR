@@ -5,13 +5,15 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GearTooth;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.SpeedControllerGroup;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 
 public class Drive implements Component
 {
 	//Multiplier for the motors so we aren't toooo speedy
-	final double MULTIPLIER = .6;
+	final double MULTIPLIER = .9;
+	final double HORIZ_MULTIPLIER = .8*MULTIPLIER;
 	
 	//Declare the 4 Talon Motors
     WPI_TalonSRX leftFront;
@@ -26,6 +28,9 @@ public class Drive implements Component
     //Declare a differential drive. I don't quite know what this is, but it drives the robot
     DifferentialDrive differentialDrive;
     
+    Timer forwardTimer = new Timer();
+    final double ON = .5;
+    final double OFF = 0;
     
 	//Constructor for the Drive class
 	public Drive()
@@ -51,6 +56,8 @@ public class Drive implements Component
         //Instantiate the differential drive.
         differentialDrive = new DifferentialDrive(leftDrive, rightDrive);
         
+        forwardTimer.start();
+        
         
 	}
 
@@ -62,7 +69,7 @@ public class Drive implements Component
 		//differentialDrive.tankDrive(MULTIPLIER *(Robot.driveController.getY(GenericHID.Hand.kLeft)), MULTIPLIER*( Robot.driveController.getY(GenericHID.Hand.kLeft)));
 		
 		//Arcade drive that was very conveniently written for us
-		differentialDrive.arcadeDrive(MULTIPLIER *(Robot.driveController.getY(GenericHID.Hand.kLeft)), MULTIPLIER*( -Robot.driveController.getX(GenericHID.Hand.kLeft)));
+		differentialDrive.arcadeDrive(MULTIPLIER *(Robot.driveController.getY(GenericHID.Hand.kLeft)), HORIZ_MULTIPLIER*( -Robot.driveController.getX(GenericHID.Hand.kLeft)));
 	}
 
 	
@@ -73,7 +80,7 @@ public class Drive implements Component
 		String gameData;
 		
 		//Gets the game data from the game server, then stores it in gameData.
-		gameData = DriverStation.getInstance().getGameSpecificMessage();
+		gameData = "RRR"/*DriverStation.getInstance().getGameSpecificMessage()*/;
 		
 		//These are all used for corrections -> they were commented out for testing and may need to be un-commented-out
 		/*if (Robot.driftSpeed.equals("stop") )
@@ -121,7 +128,7 @@ public class Drive implements Component
 		//Checks whether gameData is left or right, and sets the motors accordingly
 		
 		//Debugging - prints out motor values
-		System.out.println("AutoUpdate1 : Speed Right: " + rightFront.get() + ", " + rightBack.get() + " Speed Left: " + leftFront.get() + ", " + leftBack.get());
+		//System.out.println("AutoUpdate1 : Speed Right: " + rightFront.get() + ", " + rightBack.get() + " Speed Left: " + leftFront.get() + ", " + leftBack.get());
 		
 		//If our color is on the left of the switch
 		if (gameData.charAt(0) == 'L')
@@ -129,48 +136,34 @@ public class Drive implements Component
 			//Switch based on the state we are in
 			switch(Robot.autoState)
 			{
+			case '0':
+				//ensure motors are off when manipulator is moving
+				rightDrive.set(OFF);
+				leftDrive.set(OFF);
 			//Robot turning
-			case 'a':
-				
+			case 'a':				
 				//Turn on right motors so robot turns left; turn off left motors
-				/* TODO Get rid of magic values */
-				rightDrive.set(.5);
-				leftDrive.set(0);
-				//rightFront.set(.5);
-				//rightBack.set(.5);
-				//leftFront.set(0);
-				//leftBack.set(0);
+				rightDrive.set(ON);
+				leftDrive.set(OFF);
 				break;
 				
 			//Robot moving forward	
 			case 'b':
 				//Turn on all motors so robot goes forward
-				rightDrive.set(.5);
-				leftDrive.set(-.5);
-				//rightFront.set(.5);
-				//leftFront.set(.5);
-				//rightBack.set(.5);
-				//leftBack.set(.5);
+				rightDrive.set(ON);
+				leftDrive.set(ON);
 				break;
 				
 			case 'c':
 				//Turn on left motors so robot turns left; turn off right motors
-				rightDrive.set(0);
-				leftDrive.set(.5);
-				//leftFront.set(.5);
-				//leftBack.set(.5);
-		        //rightFront.set(0);
-		        //rightBack.set(0);
+				rightDrive.set(OFF);
+				leftDrive.set(ON);
 				break;
 				
 			case 'd':
 				//Turn off all motors
-				rightDrive.set(0);
-				leftDrive.set(0);
-		        //rightFront.set(0);
-		        //rightBack.set(0);
-		        //leftFront.set(0);
-		        //leftBack.set(0);
+				rightDrive.set(OFF);
+				leftDrive.set(OFF);
 				//Manip Code
 				break;
 				
@@ -183,29 +176,25 @@ public class Drive implements Component
 			//Switch based on the robot's state
 			switch(Robot.autoState)
 			{
+			case '0':
+				//ensure motors are off when manipulator is moving
+				rightDrive.set(OFF);
+				leftDrive.set(OFF);
+				break;
 			//Robot turning
 			case 'a':
-				//Turn on left motors so robot turns right; turn off left motors
-				rightDrive.set(0);
-				leftDrive.set(0);
-				//leftFront.set(.5);
-				//leftBack.set(.5);
-				//rightFront.set(0);
-				//rightBack.set(0);
+				//Turn on left motors so robot turns right; turn off right motors
+				rightDrive.set(OFF);
+				leftDrive.set(-ON);
 				break;
-				
 			//Robot moving forward
 			case 'b':
 				//If the lidar actually works, then do the scan thing.
 				if(Robot.ifScannerConnected) 
 				{
-				//Turn on all motors so robot moves forward
-				rightDrive.set(.5);
-				leftDrive.set(.5);
-				//rightFront.set(.5);
-				//leftFront.set(.5);
-				//rightBack.set(.5);
-				//leftBack.set(.5);
+					//Turn on all motors so robot moves forward
+					rightDrive.set(ON);
+					leftDrive.set(-ON);
 				}
 				else
 				{
@@ -215,29 +204,39 @@ public class Drive implements Component
 				
 			//Robot turning the other way
 			case 'c':
-				//Turn on right motors so robot turns left; turn off right motors
-				rightDrive.set(.5);
-				leftDrive.set(0);
-				//rightFront.set(.5);
-				//rightBack.set(.5);
-				//leftFront.set(0);
-				//leftBack.set(0);
+				//Turn on right motors so robot turns left; turn off left motors
+				rightDrive.set(ON);
+				leftDrive.set(OFF);
 				break;
 			//Robot placing cube
 			case 'd':
 				//Turn all motors off
-				rightDrive.set(0);
-				leftDrive.set(0);
-				//rightFront.set(0);
-				//rightBack.set(0);
-				//leftFront.set(0);
-				//leftBack.set(0);
+				rightDrive.set(OFF);
+				leftDrive.set(OFF);
 				//Manip Code
 				break;
 			}
 		}
 		
 	
+	}
+	
+	public void driveAutoUpdate()
+	{
+		System.out.println(forwardTimer.get());
+		if (forwardTimer.get() < 2)
+		{
+			leftDrive.set(MULTIPLIER);
+			rightDrive.set(MULTIPLIER);
+		}
+		
+		else
+		{
+			leftDrive.set(OFF);
+			rightDrive.set(OFF);
+		}
+		
+		
 	}
 
 	@Override

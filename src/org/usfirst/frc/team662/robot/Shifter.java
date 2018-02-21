@@ -13,6 +13,8 @@ public class Shifter implements Component
 	boolean current = true;
 	boolean past = false;
 	
+	boolean outputBoolean;
+	
 	
 	public void update()
 	{
@@ -20,11 +22,17 @@ public class Shifter implements Component
 		
 		if(current == true && past == false){
 			if(solenoid.get() == DoubleSolenoid.Value.kReverse) 
+			{
 				solenoid.set(DoubleSolenoid.Value.kForward);
+				outputBoolean = true;
+			}
 			else
+			{
 				solenoid.set(DoubleSolenoid.Value.kReverse);
+				outputBoolean = false;
+			}
 		}
-		//SmartDashboard.putBoolean("High Gear", !solenoid.get());
+		SmartDashboard.putBoolean("High Gear", outputBoolean);
 		past = current;
 	}
 

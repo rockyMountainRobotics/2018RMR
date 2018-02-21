@@ -25,10 +25,10 @@ public class RobotMap
 	public final static int SHIFTER_SOLENOID_OUT = 1;
 	
 	//Limit switch ports
-	public final static int LIMIT_TOP = 1;
-	public final static int LIMIT_MIDDLE = 2;
-	public final static int LIMIT_BOTTOM = 3;
-	public final static int LIMIT_ARM = 4;
+	public final static int LIMIT_TOP = 3;
+	public final static int LIMIT_MIDDLE = 4;
+	public final static int LIMIT_BOTTOM = 5;
+	public final static int LIMIT_ARM = 192040958;
 	
 	//Switch ports
 	public final static int AUTO_ENABLE_A = 0;

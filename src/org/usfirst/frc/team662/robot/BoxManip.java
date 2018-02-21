@@ -24,35 +24,36 @@ public class BoxManip implements Component
 	boolean current = true;
 	boolean past = false;
 	
-	//Create a final static double variable for speed and a double variable, also for speed
-	//Having two lets us use them as multiples of each other
-	/* TODO better names */
-	final static double ARM_SPEED = .6;
+	//ARMSPEED IS NEGATIVE
+	//FOR SOLENOID: REVERSE IS GRABBING THE CUBE; FORWARD IS RELEASE
+	final static double ARM_SPEED = .8;
 	final static double ARM_SPEED_DOWN = .4;
-	final static double REST_ARM_SPEED = -.1;
-	final static double CHAIN_SPEED = .4;
+	final static double REST_ARM_SPEED = -.2;
+	final static double CHAIN_SPEED = .6;
 	final static double CHAIN_SPEED_DOWN = .3;
-	final static double REST_CHAIN_SPEED = -.2;
+	final static double REST_CHAIN_SPEED = -.2; //this was -.2 (removed for scrimmage)
 	double speed = 0;
 	
 	//Create the TalonSRX's for the manipulator
-	//TODO: which heckin motor is named "manipMotor" and can we rename it
 	WPI_TalonSRX liftChain = new WPI_TalonSRX(RobotMap.CHAIN);
 	WPI_TalonSRX rotateArms = new WPI_TalonSRX(RobotMap.ARM);
 	
 	//Create limit switches
-	//public DigitalInput limitSwitchTop = new DigitalInput(RobotMap.LIMIT_TOP);
-	//public DigitalInput limitSwitchMiddle = new DigitalInput(RobotMap.LIMIT_MIDDLE);
-	//public DigitalInput limitSwitchBottom = new DigitalInput(RobotMap.LIMIT_BOTTOM);
-	public DigitalInput limitSwitchArm = new DigitalInput(RobotMap.LIMIT_ARM);
+	//public DigitalInput limitSwitchArm = new DigitalInput(RobotMap.LIMIT_ARM);
+	//public DigitalInput chainTopLimit = new DigitalInput(RobotMap.LIMIT_TOP);
+	//public DigitalInput chainMiddleLimit = new DigitalInput(RobotMap.LIMIT_MIDDLE);
+	//public DigitalInput chainBottomLimit = new DigitalInput(RobotMap.LIMIT_BOTTOM);
 	
 	//it's a timer
-	Timer timer = new Timer();
+	public Timer timer = new Timer();
 	
+	boolean timerStarted = false;
+
 	//autonomous timings 
-	static double autoChainTimeA = 1; 
-	static double autoarmpickupTimeA = autoChainTimeA + 1.5;
-	static double autoarmfinishTimeB = autoarmpickupTimeA + 2;
+	//static double autoChainTimeA = 1; 
+	//static double autoarmpickupTimeA = autoChainTimeA + 1.5;
+	//static double autoarmfinishTimeB = autoarmpickupTimeA + 2;
+	double autoLiftTime = .085;
 	
 	//Create an isTraveling boolean (true/false) variable
 	boolean isTraveling = false;
@@ -60,22 +61,33 @@ public class BoxManip implements Component
 	//Create a double variable for currentLocation of arms
 	double currentLocation = BOTTOM;
 	
+	boolean topLimit, middleLimit, bottomLimit;
+	
+	
+	
 	//Update method
 	public void update()
 	{
 		//Make boolean (true/false) variables for each limit switch
 		//When switch is pressed, variable is true; when not pressed, it is false
 		/* TODO put variable declarations outside of function */
-		boolean topLimit = false; // !limitSwitchTop.get();
-		boolean middleLimit = false; //!limitSwitchMiddle.get();
-		boolean bottomLimit = false; //!limitSwitchBottom.get();
-		boolean armLimit = false; 
+		topLimit = !Robot.chainTopLimit.get();
+		middleLimit = !Robot.chainMiddleLimit.get(); //!limitSwitchMiddle.get();
+		bottomLimit = !Robot.chainBottomLimit.get(); //!limitSwitchBottom.get();
+		 
 		
 		double armSpeed = Robot.manipController.getRawAxis(XboxMap.RIGHT_JOY_VERT);
 		double chainSpeed = Robot.manipController.getRawAxis(XboxMap.LEFT_JOY_VERT);
 		
+		if(topLimit && chainSpeed < 0)
+		{
+			chainSpeed = 0;
+		}
 		
-		//TODO Write Solenoid code!!
+		if(bottomLimit && chainSpeed > 0)
+		{
+			chainSpeed = 0;
+		}
 		//MOVE ARMS ACCORDINGLY WHEN X, Y, OR A BUTTONS ARE PRESSED.		
 		//When the "Y" button is pressed and the arms aren't currently moving, move them to top.
 		/*if(Robot.driveController.getRawButton(XboxMap.Y) && currentLocation != TOP && !isTraveling)
@@ -147,9 +159,10 @@ public class BoxManip implements Component
 		
 		// Check for the input in the right Joystick
 		//armSpeed is the value we get from the controller
-		System.out.println("armSpeed " + armSpeed );
+		//System.out.println("armSpeed " + armSpeed );
 		if (Math.abs(armSpeed) > Robot.DEADZONE) {
 			rotateArms.set(armSpeed * ARM_SPEED);
+			System.out.println(rotateArms.get());
 		}
 		
 		else {
@@ -158,7 +171,7 @@ public class BoxManip implements Component
 		
 		//Sets the speed of the motor
 		//chainSpeed is the value we get from the controller
-		System.out.println("chainSpeed " + chainSpeed );
+		//System.out.println("chainSpeed " + chainSpeed );
 		if (Math.abs(chainSpeed) > Robot.DEADZONE) {
 			liftChain.set(chainSpeed * CHAIN_SPEED);
 		}
@@ -167,11 +180,11 @@ public class BoxManip implements Component
 			//liftChain.
 		}
 		
-		current = Robot.manipController.getRawButton(XboxMap.LB);
+		current = Robot.manipController.getRawButton(XboxMap.RB);
 		
-		System.out.println(current);
+		//System.out.println(current);
+		//System.out.println(manipulatorSolenoid.get());
 		System.out.println(manipulatorSolenoid.get());
-	
 		if(current == true && past == false){
 			if(manipulatorSolenoid.get() == DoubleSolenoid.Value.kForward) 
 				manipulatorSolenoid.set(DoubleSolenoid.Value.kReverse);
@@ -189,19 +202,38 @@ public class BoxManip implements Component
 		switch (Robot.autoState)
 		{
 		//For first three cases, code is in Drive.
-		
-		/*
-		case 'a':
-			break;
-		case 'b':
-			break;
-		case 'c':
-			break;
-		*/
 		case '0':
-			manipulatorSolenoid.set(DoubleSolenoid.Value.kReverse);
-			liftChain.set(CHAIN_SPEED);
-			if (timer.get() >= autoChainTimeA) 
+			if(!timerStarted)
+			{
+				rotateArms.set(0);
+				manipulatorSolenoid.set(DoubleSolenoid.Value.kForward);
+				timer.reset();
+				timer.start();
+				System.out.println("Timer started");
+				timerStarted = true;
+			}
+			System.out.println("Beginning case 0; Time =" + timer.get());
+			
+			//TODO TODO TODO TODO CHANGE TO ARMS ENCODER ONCE IT IS INSTALLED BY SLOW PEOPLE
+			if(!Robot.autoSwitchB.get())
+			{
+				System.out.println("Rotating arms; Time =" + timer.get());
+				//Remember that arms rotation is negative, i.e. a negative value is upward
+				rotateArms.set(-.4);
+				if(timer.get() >= autoLiftTime && manipulatorSolenoid.get()!=DoubleSolenoid.Value.kReverse)
+				{
+					System.out.println("grab box; Time =" + timer.get());
+					manipulatorSolenoid.set(DoubleSolenoid.Value.kReverse);
+					liftChain.set(REST_CHAIN_SPEED);
+				}
+			}
+			else
+			{
+				rotateArms.set(REST_ARM_SPEED);
+				System.out.println("switch states");
+				Robot.autoState= 'a';
+			}
+			/*if (timer.get() >= autoChainTimeA) 
 			{
 				liftChain.set(REST_CHAIN_SPEED);
 				rotateArms.set(ARM_SPEED);
@@ -211,16 +243,16 @@ public class BoxManip implements Component
 					if (limitSwitchArm.get())
 					{	
 						rotateArms.set(REST_ARM_SPEED);
+						Robot.state0Finished = true;
 					}
 				}
-			}
-			Robot.autoState = 'a';
+			}*/
 			break;
 			
 		//Case D is the manipulator part, so it goes under BoxManip
 		case 'd':
 			manipulatorSolenoid.set(DoubleSolenoid.Value.kReverse);
-		break;
+			break;
 		}
 	
 		//	{ make the arms put the box into the switch. The robot should be lined up with the wall.}
@@ -229,7 +261,10 @@ public class BoxManip implements Component
 	
 	public void disable()
 	{
-		
+		rotateArms.set(0);
+		liftChain.set(0);
+		timerStarted = false;
+		manipulatorSolenoid.set(DoubleSolenoid.Value.kForward);
 	}
 	
 	@Override
